@@ -3,7 +3,7 @@ import './App.css';
 import { useNavigate } from 'react-router-dom';
 
 const Register = () => {
-  const [email, setEmail] = useState('jenny.rosen@example.com');
+  const [email, setEmail] = useState('test@example.com');
   const navigate = useNavigate();
 
   const handleSubmit = async (e) => {

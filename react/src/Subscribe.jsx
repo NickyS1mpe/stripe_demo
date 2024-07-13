@@ -18,7 +18,7 @@ const Subscribe = () => {
     } = useLocation();
     const stripePromise = loadStripe(publishableKey)
 
-    const [name, setName] = useState('Jenny Rosen');
+    const [name, setName] = useState('For Testing');
     const [messages, _setMessages] = useState('');
 
     // helper for displaying status messages.
