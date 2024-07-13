@@ -1,3 +1,8 @@
 # stripe_demo
 
-The code of frontend and backend are in different branched.
+The frontend and backend code are in two different branches.
+
+
+
+
+
