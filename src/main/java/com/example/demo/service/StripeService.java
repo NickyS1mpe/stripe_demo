@@ -6,11 +6,16 @@ import com.example.demo.model.dto.Payment.*;
 import com.google.gson.Gson;
 import com.stripe.exception.StripeException;
 import com.stripe.model.*;
+import com.stripe.model.checkout.Session;
 import com.stripe.param.*;
+import com.stripe.param.checkout.SessionCreateParams;
 import io.github.cdimascio.dotenv.Dotenv;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDate;
+import java.time.ZoneId;
+import java.time.format.DateTimeFormatter;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
@@ -246,5 +251,114 @@ public class StripeService {
         }
 
         return StripeObject.PRETTY_PRINT_GSON.toJson(customerBalanceTransactions);
+    }
+
+    public String applyCoupon(ApplyCouponRequest applyCouponRequest) {
+
+        SessionCreateParams params =
+                SessionCreateParams.builder()
+                        .addPaymentMethodType(SessionCreateParams.PaymentMethodType.CARD)
+                        .addLineItem(
+                                SessionCreateParams.LineItem.builder()
+                                        .setPrice(applyCouponRequest.getPriceId())
+                                        .setQuantity(1L)
+                                        .build())
+                        .setMode(SessionCreateParams.Mode.SUBSCRIPTION)
+                        .addDiscount(
+                                SessionCreateParams.Discount.builder()
+                                        .setCoupon(applyCouponRequest.getCouponId())
+                                        .build())
+                        .setSuccessUrl("https://example.com/success")
+                        .setCancelUrl("https://example.com/cancel")
+                        .build();
+
+        Session session = null;
+        try {
+            session = Session.create(params);
+        } catch (StripeException e) {
+            throw new RuntimeException(e);
+        }
+
+        Map<String, Object> responseData = new HashMap<>();
+        responseData.put("sessionUrl", session.getUrl());
+
+        return StripeObject.PRETTY_PRINT_GSON.toJson(responseData);
+    }
+
+    public String createInvoice(CreateInvoiceRequest createInvoiceRequest) {
+        String customerId = createInvoiceRequest.getCustomerId();
+        Invoice responseInvoice = null;
+        try {
+            // Create an Invoice
+            InvoiceCreateParams invoiceParams =
+                    InvoiceCreateParams
+                            .builder()
+                            .setCustomer(customerId)
+                            .setCurrency(createInvoiceRequest.getCurrency())
+                            .setDescription(createInvoiceRequest.getDescription())
+                            .setCollectionMethod(InvoiceCreateParams.CollectionMethod.SEND_INVOICE)
+                            .setDaysUntilDue(30L)
+                            .build();
+
+            Invoice invoice = Invoice.create(invoiceParams);
+
+            InvoiceItemCreateParams invoiceItemParams =
+                    InvoiceItemCreateParams.builder()
+                            .setCustomer(customerId)
+                            .setPrice(createInvoiceRequest.getPriceId())
+                            .setInvoice(invoice.getId())
+                            .build();
+
+            try {
+                InvoiceItem.create(invoiceItemParams);
+            } catch (StripeException e) {
+                throw new RuntimeException(e);
+            }
+
+            // Send an Invoice
+            InvoiceSendInvoiceParams params = InvoiceSendInvoiceParams.builder().build();
+            responseInvoice = invoice.sendInvoice(params);
+        } catch (StripeException e) {
+            throw new RuntimeException(e);
+        }
+
+        Map<String, Object> responseData = new HashMap<>();
+        responseData.put("invoiceId", responseInvoice.getId());
+        responseData.put("invoiceStatus", responseInvoice.getStatus());
+
+        return StripeObject.PRETTY_PRINT_GSON.toJson(responseData);
+    }
+
+    public String getMonthlySummary(String customerId, MonthlySummaryRequest monthlySummaryRequest) {
+        long spendSummary;
+        InvoiceCollection invoices;
+        try {
+            DateTimeFormatter formatter = DateTimeFormatter.ofPattern("MM/dd/yyyy");
+            LocalDate startLocalDate = LocalDate.parse(monthlySummaryRequest.getStartTime(), formatter);
+            LocalDate endLocalDate = LocalDate.parse(monthlySummaryRequest.getEndTime(), formatter);
+            long startTimestamp = startLocalDate.atStartOfDay(ZoneId.systemDefault()).toEpochSecond();
+            long endTimestamp = endLocalDate.plusDays(1).atStartOfDay(ZoneId.systemDefault()).toEpochSecond();
+
+            InvoiceListParams params = InvoiceListParams.builder()
+                    .setCustomer(customerId)
+                    .setCreated(InvoiceListParams.Created.builder()
+                            .setGte(startTimestamp)
+                            .setLte(endTimestamp)
+                            .build())
+                    .build();
+
+            invoices = Invoice.list(params);
+
+            spendSummary = invoices.getData().stream()
+                    .mapToLong(Invoice::getTotal)
+                    .sum();
+
+        } catch (StripeException e) {
+            throw new RuntimeException(e);
+        }
+        Map<String, Object> responseData = new HashMap<>();
+        responseData.put("totalSpend", spendSummary);
+        responseData.put("currency", invoices.getData().isEmpty() ? "NULL" : invoices.getData().get(0).getCurrency());
+        return StripeObject.PRETTY_PRINT_GSON.toJson(responseData);
     }
 }

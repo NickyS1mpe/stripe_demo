@@ -3,6 +3,7 @@ package com.example.demo.controller;
 import com.example.demo.model.dto.Payment.*;
 import com.example.demo.service.StripeService;
 import com.stripe.model.StripeObject;
+import com.sun.xml.bind.v2.TODO;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -40,6 +41,7 @@ public class PaymentController {
         return ResponseEntity.status(HttpStatus.CREATED).body(StripeObject.PRETTY_PRINT_GSON.toJson(responseData));
     }
 
+    // For test only
     @PostMapping("/login-customer/{customer_id}")
     public ResponseEntity<?> loginCustomer(@PathVariable("customer_id") String customerId, HttpServletResponse response) {
         Cookie cookie = new Cookie("customer", customerId);
@@ -69,6 +71,7 @@ public class PaymentController {
     }
 
 //    @PostMapping("/update-subscription")
+    // TODO
 //    public ResponseEntity<?> updateSubscription(@Valid @RequestBody CancelSubscriptionRequest cancelSubscriptionRequest) {
 //        return ResponseEntity.status(HttpStatus.ACCEPTED).body(stripeService.cancelSubscription(cancelSubscriptionRequest));
 //    }
@@ -92,6 +95,7 @@ public class PaymentController {
      */
 
     // Add a payment method for the customer.
+    // TODO
     @PostMapping("/add-payment-method")
     public ResponseEntity<?> addPaymentMethod(@CookieValue(name = "customer", required = false) String customerId, @Valid @RequestBody RemovePaymentMethodRequest removePaymentMethodRequest) {
         return ResponseEntity.status(HttpStatus.OK).body("");
@@ -116,7 +120,11 @@ public class PaymentController {
      */
 
     // Create an invoice for the customer.
-//    @PostMapping("/create-invoice")
+    // Send through email to customer
+    @PostMapping("/create-invoice")
+    public ResponseEntity<?> createInvoice(@Valid @RequestBody CreateInvoiceRequest createInvoiceRequest) {
+        return ResponseEntity.status(HttpStatus.OK).body(stripeService.createInvoice(createInvoiceRequest));
+    }
 
     // List all invoices for the customer.
     @GetMapping("/list-invoices")
@@ -137,7 +145,11 @@ public class PaymentController {
      */
 
     // Apply a discount coupon to a payment.
-//    @PostMapping("/apply-coupon")
+    // Return a Stripe checkout session url
+    @PostMapping("/apply-coupon")
+    public ResponseEntity<?> applyCoupon(@Valid @RequestBody ApplyCouponRequest applyCouponRequest) {
+        return ResponseEntity.status(HttpStatus.OK).body(stripeService.applyCoupon(applyCouponRequest));
+    }
 
     // Remove an applied discount coupon.
     @PostMapping("/remove-coupon")
@@ -164,11 +176,14 @@ public class PaymentController {
     }
 
     // Get a monthly summary of payments.
-//    @PostMapping("/monthly-summary")
+    @PostMapping("/monthly-summary")
+    public ResponseEntity<?> getMonthlySummary(@CookieValue(name = "customer", required = false) String customerId, MonthlySummaryRequest monthlySummaryRequest) {
+        return ResponseEntity.status(HttpStatus.OK).body(stripeService.getMonthlySummary(customerId, monthlySummaryRequest));
+    }
 
     /*
      * Security and Fraud Detection
-     *
+     * TODO
      *
      */
 
