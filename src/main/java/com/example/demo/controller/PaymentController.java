@@ -70,11 +70,6 @@ public class PaymentController {
         return ResponseEntity.status(HttpStatus.ACCEPTED).body(stripeService.cancelSubscription(cancelSubscriptionRequest));
     }
 
-//    @PostMapping("/update-subscription")
-    // TODO
-//    public ResponseEntity<?> updateSubscription(@Valid @RequestBody CancelSubscriptionRequest cancelSubscriptionRequest) {
-//        return ResponseEntity.status(HttpStatus.ACCEPTED).body(stripeService.cancelSubscription(cancelSubscriptionRequest));
-//    }
 
     // Get the current customer's subscriptions
     @GetMapping("/subscriptions")
@@ -97,8 +92,8 @@ public class PaymentController {
     // Add a payment method for the customer.
     // TODO
     @PostMapping("/add-payment-method")
-    public ResponseEntity<?> addPaymentMethod(@CookieValue(name = "customer", required = false) String customerId, @Valid @RequestBody RemovePaymentMethodRequest removePaymentMethodRequest) {
-        return ResponseEntity.status(HttpStatus.OK).body("");
+    public ResponseEntity<?> addPaymentMethod(@CookieValue(name = "customer", required = false) String customerId, @Valid @RequestBody AddPaymentMethodRequest addPaymentMethodRequest) {
+        return ResponseEntity.status(HttpStatus.OK).body(stripeService.addPaymentMethod(customerId, addPaymentMethodRequest));
     }
 
     // Remove a payment method for the customer.

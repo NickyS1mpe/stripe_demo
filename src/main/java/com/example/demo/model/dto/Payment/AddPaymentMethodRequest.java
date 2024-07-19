@@ -4,4 +4,7 @@ import lombok.Data;
 
 @Data
 public class AddPaymentMethodRequest {
+
+    private String paymentId;
+
 }

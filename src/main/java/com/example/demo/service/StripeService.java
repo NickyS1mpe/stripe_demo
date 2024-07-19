@@ -361,4 +361,19 @@ public class StripeService {
         responseData.put("currency", invoices.getData().isEmpty() ? "NULL" : invoices.getData().get(0).getCurrency());
         return StripeObject.PRETTY_PRINT_GSON.toJson(responseData);
     }
+
+    public String addPaymentMethod(String customerId, AddPaymentMethodRequest addPaymentMethodRequest) {
+        PaymentMethod paymentMethod = null;
+        try {
+            PaymentMethod resource = PaymentMethod.retrieve(addPaymentMethodRequest.getPaymentId());
+            PaymentMethodAttachParams params =
+                    PaymentMethodAttachParams.builder().setCustomer(customerId).build();
+            paymentMethod = resource.attach(params);
+        } catch (StripeException e) {
+            throw new RuntimeException(e);
+        }
+        Map<String, Object> responseData = new HashMap<>();
+        responseData.put("PaymentId", paymentMethod.getId());
+        return StripeObject.PRETTY_PRINT_GSON.toJson(responseData);
+    }
 }
